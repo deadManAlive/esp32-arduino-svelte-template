@@ -19,8 +19,11 @@
 
 Port is saved as `port` configuration in `arduino-config.json`. Set this value or call `upload`/`deploy` with `port` argument provided. Subsequent calls of those scripts do not need `port` to be provided. Exception will be thrown if `port` configuration is undefined or is an empty string.
 
+> Board configuration is default to DOIT ESP32 DEVKIT V! (set as `board` in `arduino-config.json`). List avaiable esp32 boards with `npm run lisboards` command.
+
 ## NPM Scripts
 * `build`, `dev`, `start`: Svelte scripts to build/watch/test web server on localhost.
 * `mkfs`: Build SPIF file system (`.spiffs.bin`) from `public` folder.
 * `upload`: Build SPIFFS from `public` folder then upload to esp32, accept port argument with `port=PORT`.
 * `deploy`: Upload arduino program to esp32, accept port argument with `port=PORT`.
+* `listboards`: List all available esp32 boards, set accordingly in `board` in `arduino-config.json`
