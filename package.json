@@ -6,7 +6,8 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
-    "mkfs": "npm run build && python ./py-scripts/mkputfs.py --no-upload"
+    "mkfs": "npm run build && python ./py-scripts/mkputfs.py --no-upload",
+    "listboards": "python ./py-scripts/boards.py"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
