@@ -1,0 +1,2 @@
+esptool==4.4
+requests==2.82.2

@@ -1,0 +1,11 @@
+# folders
+/node_modules/
+/public/build/
+.venv/
+bin/
+__pycache__/
+
+.DS_Store
+
+# files
+*.spiffs.bin
