@@ -5,6 +5,7 @@
 import esptool
 import spiffsgen
 import sys
+import json
 
 from part import get_spiffs_parameter
                 
@@ -37,9 +38,21 @@ if __name__ == "__main__":
     else:
         # check if port is given
         p = next((opt for opt in sys.argv if "port=" in opt), None)
+
         if p is None:
-            raise Exception("Port undefined for uploading!")
-        port = p.split("=")[1]
+            with open("./arduino-config.json") as cfgfile:
+                cfg = json.load(cfgfile)
+                port = cfg["port"]
+
+                if port == "":
+                    raise ValueError("Port is not set in 'arduino-config.json'!")
+        else:
+            port = p.split("=")[1]
+            with open("./arduino-config.json", "r") as cfgfile:
+                cfg = json.load(cfgfile)
+                cfg["port"] = port
+            with open("./arduino-config.json", "w") as cfgfile:
+                json.dump(cfg, cfgfile, indent=4)
 
         if "--just-upload" not in sys.argv:
             spiffsgen.main(spiffsgen_args)

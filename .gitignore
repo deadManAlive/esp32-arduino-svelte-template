@@ -5,6 +5,7 @@
 bin/
 __pycache__/
 build/
+.vscode/
 
 .DS_Store
 

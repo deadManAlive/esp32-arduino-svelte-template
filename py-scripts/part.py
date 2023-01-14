@@ -6,48 +6,61 @@ import platform
 import requests
 import os
 import subprocess
-
-from boards import BOARD
+import glob
+import json
 
 DBG = False
 
 def lazy_user_want_us_to_get_arduino_cli() -> str:
     # step 1: check if arduino-cli found in path
-    arduino_cli = shutil.which("arduino-cli")
+    arduino_cli = shutil.which("arduino-clic")
+
+    if arduino_cli is None:
+        with open("arduino-config.json") as cfgfile:
+            cfg = json.load(cfgfile)
+
+            try:
+                arduino_cli = cfg["cli"]
+                if glob.glob(f"{arduino_cli}*") == []:
+                    arduino_cli = None
+            except:
+                arduino_cli = None
 
     # step 2: if not found, download
     if arduino_cli is None or DBG:
 
-        print("Downloading arduino-cli: started...")
+        # step 2.5: check if arduino-cli is already downloaded
+        if glob.glob("./bin/arduino-cli/arduino-cli*") == []:
+            print("Downloading arduino-cli: started...")
 
-        dlink = None
-        fname = None
+            dlink = None
+            fname = None
 
-        sysarch = f"{platform.system()}_{platform.architecture()[0]}"
+            sysarch = f"{platform.system()}_{platform.architecture()[0]}"
 
-        response = requests.get("https://api.github.com/repos/arduino/arduino-cli/releases/latest")
+            response = requests.get("https://api.github.com/repos/arduino/arduino-cli/releases/latest")
 
-        for asset in response.json()["assets"]:
-            if sysarch in asset['name'] and 'msi' not in asset['name']:
-                fname = asset['name']
-                dlink = asset['browser_download_url']
-                print(dlink)
+            for asset in response.json()["assets"]:
+                if sysarch in asset['name'] and 'msi' not in asset['name']:
+                    fname = asset['name']
+                    dlink = asset['browser_download_url']
+                    print(dlink)
 
-        if dlink is None or fname is None:
-            raise FileNotFoundError(f"Cannot find arduino-cli github asset that have '{sysarch}' substring.")
+            if dlink is None or fname is None:
+                raise FileNotFoundError(f"Cannot find arduino-cli github asset that have '{sysarch}' substring.")
 
-        asset_archive = requests.get(dlink)
+            asset_archive = requests.get(dlink)
 
-        os.makedirs("./bin", exist_ok=True)
+            os.makedirs("./bin", exist_ok=True)
 
-        with open(f"./bin/{fname}", "wb") as f:
-            f.write(asset_archive.content)
+            with open(f"./bin/{fname}", "wb") as f:
+                f.write(asset_archive.content)
 
-        shutil.unpack_archive(f"./bin/{fname}", "./bin/arduino-cli")
+            shutil.unpack_archive(f"./bin/{fname}", "./bin/arduino-cli")
+            
+            print("downloading arduino-cli: done")
 
         arduino_cli = "./bin/arduino-cli/arduino-cli"
-
-        print("downloading arduino-cli: done")
 
     # step 3: check if esp32 core is installed
     core_list = subprocess.run([arduino_cli, "core", "list"], capture_output=True, text=True)
@@ -60,7 +73,7 @@ def lazy_user_want_us_to_get_arduino_cli() -> str:
                         "update-index",
                         "--additional-urls",
                         "https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"])
-        subprocess.run([arduino_cli, "core", "install", "esp32:esp32"])
+        subprocess.run([arduino_cli, "core", "install", "esp32:esp32"]) #type: ignore
 
         print("esp32 board installed. Default to 'esp32doit-devkit-v1'")
         print("If you are not using that, change in 'py-scripts/boards.py'")
@@ -73,12 +86,16 @@ def lazy_user_want_us_to_get_arduino_cli() -> str:
 def lazy_user_want_us_to_get_default_csv():
     acmd = lazy_user_want_us_to_get_arduino_cli()
 
+    with open("./arduino-config.json", "r") as cfgfile:
+        cfg = json.load(cfgfile)
+        board = cfg["board"]
+
     cpl = subprocess.run([
         acmd,
         "compile",
         "-v",
         "--fqbn",
-        BOARD,
+        board,
         "--build-path",
         "./build",
         "./arduino-src/main"
